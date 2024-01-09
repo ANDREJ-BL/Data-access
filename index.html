@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="sr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Kviz Pitanja</title>
+</head>
+
+<body>
+    <h1>Kviz Pitanja</h1>
+    <form id="kviz-form">
+        <div id="kviz-container"></div>
+        <button type="submit">Sačuvaj odgovore</button>
+    </form>
+
+    <script>
+        let kvizPitanja = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('kviz-form');
+            const container = document.getElementById('kviz-container');
+
+            fetch('quiz.json')
+                .then(response => response.json())
+                .then(data => {
+                    kvizPitanja = data.quiz;
+                    Object.values(kvizPitanja).forEach((pitanje, index) => {
+                        const div = document.createElement('div');
+                        const pitanjeNaslov = document.createElement('h2');
+                        pitanjeNaslov.textContent = pitanje.question;
+                        div.appendChild(pitanjeNaslov);
+
+                        pitanje.options.forEach(odgovor => {
+                            const label = document.createElement('label');
+                            label.style.display = 'block';
+                            const radioInput = document.createElement('input');
+                            radioInput.type = 'radio';
+                            radioInput.name = 'pitanje' + index;
+                            radioInput.value = odgovor;
+
+                            label.appendChild(radioInput);
+                            label.append(odgovor);
+                            div.appendChild(label);
+                        });
+
+                        container.appendChild(div);
+                    });
+
+                    učitajOdgovore();
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                snimiOdgovore();
+            });
+
+            function snimiOdgovore() {
+                const odgovori = {};
+                Object.values(kvizPitanja).forEach((pitanje, index) => {
+                    const odabir = form['pitanje' + index].value;
+                    if (odabir) {
+                        odgovori['pitanje' + index] = odabir;
+                    }
+                });
+
+                localStorage.setItem('kvizOdgovori', JSON.stringify(odgovori));
+            }
+
+            function učitajOdgovore() {
+                const snimljeniOdgovori = JSON.parse(localStorage.getItem('kvizOdgovori'));
+                if (snimljeniOdgovori) {
+                    Object.entries(snimljeniOdgovori).forEach(([ključ, vrednost]) => {
+                        const odabir = form[ključ];
+                        if (odabir) {
+                            odabir.value = vrednost;
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
